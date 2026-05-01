@@ -1,0 +1,173 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+
+struct Car {
+    int id;
+    string model;
+    double pricePerDay;
+    string status;
+    double securityDeposit; 
+};
+
+class CarRentalSystem {
+private:
+    vector<Car> cars;
+    string currentUser;
+
+public:
+    CarRentalSystem() {
+        cars = {
+            {101, "Maruti Swift", 1500.0, "Available", 5000.0},
+            {102, "Hyundai Creta", 3500.0, "Available", 5000.0},
+            {103, "Mahindra Thar", 4500.0, "Available", 5000.0}
+        };
+    }
+
+    void start() {
+        cout << "\n===============================================" << endl;
+        cout << "   🚗 INDIAN CAR RENTAL MANAGEMENT SYSTEM" << endl;
+        cout << "===============================================" << endl;
+        cout << "1. Register / Login (Book a Car)" << endl;
+        cout << "2. Return a Car (Claim Refund)" << endl;
+        cout << "3. Exit System" << endl;
+        cout << "-----------------------------------------------" << endl;
+        cout << "Select option: ";
+        
+        int choice;
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                loginUser();
+                break;
+            case 2:
+                processReturn();
+                break;
+            case 3:
+                cout << "\nThank you for using the Car Rental System. Namaste! 🙏" << endl;
+                exit(0); // This exits the entire program
+            default:
+                cout << "❌ Invalid choice. Please try again." << endl;
+                start();
+        }
+    }
+
+    void loginUser() {
+        string username;
+        cout << "\nEnter Username: ";
+        cin >> username;
+        currentUser = username;
+        showAvailableCars();
+    }
+
+    void showAvailableCars() {
+        cout << "\n--- Available Cars ---" << endl;
+        for (const auto& car : cars) {
+            if (car.status == "Available") {
+                cout << "ID: " << car.id << " | " << car.model << " | ₹" << car.pricePerDay << "/day" << endl;
+            }
+        }
+        selectCar();
+    }
+
+    void selectCar() {
+        int selectedID;
+        cout << "\nEnter Car ID to rent (or 0 to go back): ";
+        cin >> selectedID;
+
+        if (selectedID == 0) {
+            start();
+            return;
+        }
+
+        for (auto& car : cars) {
+            if (car.id == selectedID && car.status == "Available") {
+                processBooking(car);
+                return;
+            }
+        }
+        cout << "❌ Invalid ID or Car Rented." << endl;
+        start();
+    }
+
+    void processBooking(Car& car) {
+        int days;
+        cout << "Number of days for rental? ";
+        cin >> days;
+
+        double rentalTotal = days * car.pricePerDay;
+        double totalPrepaid = rentalTotal + car.securityDeposit;
+
+        cout << "\n--- 🧾 Booking Summary ---" << endl;
+        cout << "Rental Charges:   ₹" << rentalTotal << endl;
+        cout << "Security Deposit: ₹" << car.securityDeposit << " (Refundable)" << endl;
+        cout << "---------------------------" << endl;
+        cout << "Total to Pay Now: ₹" << totalPrepaid << endl;
+        cout << "---------------------------" << endl;
+
+        cout << "Confirm Prepaid Payment (y/n)? ";
+        char confirm;
+        cin >> confirm;
+
+        if (confirm == 'y' || confirm == 'Y') {
+            car.status = "Rented";
+            cout << "✅ Payment Successful! Drive safe, " << currentUser << "." << endl;
+        }
+        start(); 
+    }
+
+    void processReturn() {
+        int returnID;
+        cout << "\nEnter the Car ID you are returning: ";
+        cin >> returnID;
+
+        for (auto& car : cars) {
+            if (car.id == returnID && car.status == "Rented") {
+                char damaged;
+                double fine = 0.0;
+
+                cout << "Was the car damaged during the rental? (y/n): ";
+                cin >> damaged;
+
+                if (damaged == 'y' || damaged == 'Y') {
+                    cout << "\nSelect Damage Severity:\n1. Minor (Scratches) - ₹2,000\n2. Major (Body Work) - ₹5,000\n3. Critical (Heavy) - ₹10,000\nChoice: ";
+                    int severity;
+                    cin >> severity;
+
+                    if (severity == 1) fine = 2000;
+                    else if (severity == 2) fine = 5000;
+                    else if (severity == 3) fine = 10000;
+                }
+
+                cout << "\n--- 💰 Settlement Summary ---" << endl;
+                if (fine == 0) {
+                    cout << "✅ No damage detected. Full refund of ₹" << car.securityDeposit << " processed!" << endl;
+                } else {
+                    cout << "⚠️ Damage detected. Fine: ₹" << fine << endl;
+                    if (fine <= car.securityDeposit) {
+                        cout << "Balance Refund: ₹" << (car.securityDeposit - fine) << endl;
+                    } else {
+                        cout << "Additional Payment Due (Deposit exceeded): ₹" << (fine - car.securityDeposit) << endl;
+                    }
+                }
+                
+                car.status = "Available"; 
+                cout << "\nReturn processed successfully." << endl;
+                start();
+                return;
+            }
+        }
+        cout << "❌ This car is not currently rented or ID is wrong." << endl;
+        start();
+    }
+};
+
+int main() {
+    CarRentalSystem system;
+    system.start();
+    return 0;
+}
